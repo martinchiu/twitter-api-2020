@@ -11,30 +11,27 @@ module.exports = {
     const userData = await User.findAll({
       raw: true,
       nest: true,
-      where: { role: 'user' }
+      where: { role: 'user' },
+      attributes: ['id']
     })
-      .then(user => user.map(i => i.id))
 
     const tweetData = await Tweet.findAll({
       raw: true,
-      nest: true
+      nest: true,
+      attributes: ['id']
     })
-      .then(tweet => tweet.map(i => i.id))
 
-      await queryInterface.bulkInsert('Replies', Array.from({ length: 150 }).map((d, i) => {
-        let a = 0
-        for (let b = i; b / 3 >= 1; b = b - 3) {
-          a++
-        }
-        const tweet = {
-          tweetId: tweetData[a],
-          userId: userData[Math.floor(Math.random() * userData.length)],
-          comment: faker.lorem.text(),
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-        return tweet
-      }), {})
+    await queryInterface.bulkInsert('Replies', Array.from({ length: 150 }).map((d, i) => {
+
+      const tweet = {
+        tweetId: tweetData[Math.floor(i / 3)].id,
+        userId: userData[Math.floor(Math.random() * userData.length)].id,
+        comment: faker.lorem.text(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      return tweet
+    }), {})
   },
 
   down: (queryInterface, Sequelize) => {
