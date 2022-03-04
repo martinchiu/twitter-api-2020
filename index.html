@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatroom</title>
+    <link type="text/css" rel="stylesheet" href="css/chat.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Noto+Sans+TC:wght@100;300;400;500;700&display=swap" rel="stylesheet">        
+</head>
+<body>
+
+<!--登錄頁面-->
+<div class="login-wrap" id="login-wrap">
+    <div class="login-con">
+        <p>🍇</p>
+        <span>輸入使用者ID，用來查詢使用者</span>
+        <input type="text" placeholder="Grape" id="loginName">
+        <button class="login-btn">Start</button>
+    </div>
+</div>
+
+<!--聊天介面-->
+<div class="chat-wrap hide">
+    <div class="chat-wrap-top">
+        <h3 id="chat-title"> </h3>
+        <button class="leaveBtn">✖️</button>
+    </div>
+    <div class="chat-wrap-main" id="chat-wrap">
+        <div class="chat-con clearfix"></div>
+        <div class="bottom">
+            <input type="text" id="sendtxt" placeholder="Type a message">
+            <button class="sendBtn">
+                ＞
+            </button>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.socket.io/4.4.1/socket.io.min.js" integrity="sha384-fKnu0iswBIqkjxrhQCTZ7qlLHOFEgNkRmK2vaO/LbTZSXdJfAu6ewRBdwHPhBo/H" crossorigin="anonymous"></script>
+<script type="text/javascript" src="js/chat.js"></script>    
+</body>
+</html>

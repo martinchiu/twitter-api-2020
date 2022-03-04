@@ -41,7 +41,7 @@ const userController = {
   putUserProfile: (req, res, next) => {
     if (Number(req.params.id) !== getUser(req).dataValues.id) throw new Error('只能編輯自己的資料')
 
-    // 為了讓前後端再計算跳行字數會一致
+    // 為了讓前後端再計算跳行字數會一致(跳行從'/n'會成' ')
     let introduction = ''
     if (req.body.introduction !== undefined) {
       introduction = req.body.introduction.replace(/\r\n|\n/g, ' ')
