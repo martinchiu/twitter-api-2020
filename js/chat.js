@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 // 前端版面的JS
-const socket = io('http://localhost:8080/') // 填寫要連接後端是伺服器網址
+const socket = io('https://rocky-shelf-75930.herokuapp.com/') // 填寫要連接後端是伺服器網址
 
 let userId // 當前使用者id
 let userName // 當前使用者姓名

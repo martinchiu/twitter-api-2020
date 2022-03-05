@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000
 const server = require('http').createServer(app)
 const buildSocket = require('./server')
 buildSocket(server)
-server.listen(8080)
+server.listen(PORT)
 
 app.use(passport.initialize())
 app.use(express.urlencoded({ extended: true }))
