@@ -81,13 +81,10 @@ module.exports = (io, socket) => {
             source: 'user'
           })
             .then(message => {
-              const messageData = message.toJSON()
-              const data = {
-                ...messageData,
-                source: 'user',
+              io.sockets.emit('message', {
+                ...message.toJSON(),
                 userData: user.toJSON()
-              }
-              io.sockets.emit('message', data)
+              })
             })
         }
       })
