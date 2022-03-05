@@ -4,7 +4,7 @@ const moment = require('moment')
 module.exports = (io, socket) => {
   let onlineUsers = []
   socket.on('login', async data => {
-    const userData = await User.findByPk(data.userId).toJSON()
+    const userData = await User.findByPk(data.userId, { raw: true })
     if (!userData) {
       io.sockets.emit('loginFail', { message: '輸入錯誤使用者Id，無法登入' })
     } else {
@@ -13,7 +13,7 @@ module.exports = (io, socket) => {
       const newMessage = await Message.create({
         userId: userData.id,
         message: 'join'
-      }).toJSON()
+      }).dataValues.toJSON()
 
       // 登入成功後回傳給所有上線使用者
       io.sockets.emit('message', {
@@ -30,7 +30,7 @@ module.exports = (io, socket) => {
       })
 
       // 更新登入使用者歷史訊息
-      const oleMessage = await Message.findAll({
+      const oldMessage = await Message.findAll({
         raw: true,
         nest: true,
         attributes: { exclude: ['updatedAt'] },
@@ -41,7 +41,7 @@ module.exports = (io, socket) => {
         message: '登入成功',
         loginUserId: userData.id,
         userName: userData.name,
-        messageData: oleMessage,
+        messageData: oldMessage,
         onlineUsers,
         onlineUserNumber: onlineUsers.length
       })
