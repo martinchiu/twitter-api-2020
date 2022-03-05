@@ -1,8 +1,8 @@
 const { User, Message } = require('../../models')
-const moment = require('moment')
 let onlineUsers = []
 
 module.exports = (io, socket) => {
+  /* 監聽登入事件 */
   socket.on('login', data => {
     User.findByPk(data.userId, { raw: true })
       .then(user => {
@@ -11,7 +11,9 @@ module.exports = (io, socket) => {
           io.sockets.emit('fail', { message: '輸入錯誤使用者Id，無法登入' })
         } else {
           // 登入成功後，加入的使用者資訊
-          onlineUsers.push(user)
+          if (!onlineUsers.some(i => i.id === user.id)) {
+            onlineUsers.push(user)
+          }
           Message.create({
             userId: user.id,
             message: 'join',
@@ -54,18 +56,30 @@ module.exports = (io, socket) => {
 
   /* 監聽登出事件 */
   socket.on('logout', data => {
-    onlineUsers = onlineUsers.filter(i => i.id !== data.userId)
-    io.sockets.emit('message', {
-      message: `${data.userName}離開聊天室`,
-      source: 'server',
-      userData: data,
-      createdAt: moment().format(),
-      action: 'leave'
-    })
-    io.sockets.emit('userListUpdate', {
-      onlineUsers,
-      onlineUserNumber: onlineUsers.length
-    })
+    User.findByPk(data.userId, { raw: true })
+      .then(user => {
+        delete user.password
+        if (!user) {
+          io.sockets.emit('fail', { message: '輸入錯誤使用者Id，無法登出' })
+        } else {
+          onlineUsers = onlineUsers.filter(i => i.id !== data.userId)
+          Message.create({
+            userId: data.userId,
+            message: 'logout',
+            source: 'server'
+          })
+            .then(message => {
+              io.sockets.emit('message', {
+                ...message.toJSON(),
+                userData: user
+              })
+              io.sockets.emit('userListUpdate', {
+                onlineUsers,
+                onlineUserNumber: onlineUsers.length
+              })
+            })
+        }
+      })
   })
 
   /* 接收訊息 */
