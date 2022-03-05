@@ -10,11 +10,7 @@ const router = require('./routes')
 const app = express()
 const PORT = process.env.PORT || 3000
 
-// socket設定(原本)
-// const server = require('http').createServer(app)
-// buildSocket(server)
-// server.listen(PORT)
-
+// socket設定
 const buildSocket = require('./server')
 const server = express()
   .listen(PORT, () => console.log(`Listening on ${PORT}`))
@@ -26,6 +22,5 @@ app.use(express.json())
 app.use('/api', CORSHeader, router)
 
 app.get('/', (req, res) => res.send('Hello World!'))
-// app.listen(PORT, () => console.log(`Example app listening on port ${PORT}!`))
 
 module.exports = app
