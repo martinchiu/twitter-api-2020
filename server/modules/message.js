@@ -39,7 +39,6 @@ module.exports = (io, socket) => {
             include: [{ model: User, as: 'userData' }]
           })
             .then(messageData => {
-              console.log(messageData)
               socket.emit('loginSuccess', {
                 message: '登入成功',
                 loginUserId: user.id,
