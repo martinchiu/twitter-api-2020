@@ -14,15 +14,14 @@ module.exports = (io, socket) => {
           onlineUsers.push(user)
           Message.create({
             userId: user.id,
-            message: 'join'
+            message: 'join',
+            source: 'server'
           })
             .then(message => {
               // 登入成功後回傳給所有上線使用者
               io.sockets.emit('message', {
-                message: 'join',
-                source: 'server',
-                userData: user,
-                createdAt: message.dataValues.createdAt
+                ...message.toJSON(),
+                userData: user
               })
 
               // 更新上線使用者清單
@@ -39,12 +38,12 @@ module.exports = (io, socket) => {
             attributes: { exclude: ['updatedAt'] },
             include: [User]
           })
-            .then(message => {
+            .then(messageData => {
               socket.emit('loginSuccess', {
                 message: '登入成功',
                 loginUserId: user.id,
                 userName: user.name,
-                messageData: message.map(i => ({ ...i, source: 'user' })),
+                messageData,
                 onlineUsers,
                 onlineUserNumber: onlineUsers.length
               })
@@ -78,7 +77,8 @@ module.exports = (io, socket) => {
         } else {
           Message.create({
             userId: data.userId,
-            message: data.message
+            message: data.message,
+            source: 'user'
           })
             .then(message => {
               const messageData = message.toJSON()
