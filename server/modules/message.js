@@ -3,8 +3,6 @@ const moment = require('moment')
 
 module.exports = (io, socket) => {
   let onlineUsers = []
-  console.log(socket)
-  console.log(io)
   socket.on('login', loginUserId => {
     User.findByPk(loginUserId)
       .then(user => {
