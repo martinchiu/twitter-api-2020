@@ -11,7 +11,10 @@ module.exports = (io, socket) => {
           io.sockets.emit('fail', { message: '輸入錯誤使用者Id，無法登入' })
         } else {
           // 登入成功後，加入的使用者資訊
-          onlineUsers.push(user)
+          if (!onlineUsers.some(i => i.id === user.id)) {
+            onlineUsers.push(user)
+          }
+          // onlineUsers.push({ ...user, number: 1 })
           Message.create({
             userId: user.id,
             message: 'join',
