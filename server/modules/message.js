@@ -1,8 +1,8 @@
 const { User, Message } = require('../../models')
 const moment = require('moment')
+let onlineUsers = []
 
 module.exports = (io, socket) => {
-  let onlineUsers = []
   socket.on('login', data => {
     User.findByPk(data.userId, { raw: true })
       .then(user => {
@@ -36,9 +36,10 @@ module.exports = (io, socket) => {
             raw: true,
             nest: true,
             attributes: { exclude: ['updatedAt'] },
-            include: [User]
+            include: [{ model: User, as: 'userData' }]
           })
             .then(messageData => {
+              console.log(messageData)
               socket.emit('loginSuccess', {
                 message: '登入成功',
                 loginUserId: user.id,
