@@ -1,4 +1,5 @@
 const meaasge = require('./modules/message')
+const privateMessage = require('./modules/privateMessage')
 
 module.exports = (server) => {
   const io = require('socket.io')(server, {
@@ -16,8 +17,9 @@ module.exports = (server) => {
     socket.onAny((event, ...args) => {
       console.log(event, args)
     })
-
     socket.on('disconnect', (reason) => console.log(reason))
+
     meaasge(io, socket)
+    privateMessage(io, socket)
   })
 }
