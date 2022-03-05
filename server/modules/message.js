@@ -7,7 +7,7 @@ module.exports = (io, socket) => {
     const userData = await User.findByPk(data.userId, { raw: true })
     delete userData.password
     if (!userData) {
-      io.sockets.emit('loginFail', { message: '輸入錯誤使用者Id，無法登入' })
+      io.sockets.emit('fail', { message: '輸入錯誤使用者Id，無法登入' })
     } else {
       // 登入成功後，加入的使用者資訊
       onlineUsers.push(userData)
@@ -65,10 +65,25 @@ module.exports = (io, socket) => {
 
   /* 接收訊息 */
   socket.on('message', data => {
-    Message.create({
-      userId: data.userData.id,
-      message: data.message
-    })
-      .then(message => io.sockets.emit('message', message.dataValues.toJSON()))
+    User.findByPk(data.userId)
+      .then(user => {
+        if (!user) {
+          io.sockets.emit('fail', { message: '輸入錯誤使用者Id，無法新增訊息' })
+        } else {
+          Message.create({
+            userId: data.userId,
+            message: data.message
+          })
+            .then(message => {
+              const data = {
+                message: message.dataValues.message,
+                source: 'user',
+                userData: user.toJSON(),
+                createdAt: message.dataValues.createdAt
+              }
+              io.sockets.emit('message', data)
+            })
+        }
+      })
   })
 }
