@@ -3,48 +3,48 @@ const moment = require('moment')
 
 module.exports = (io, socket) => {
   let onlineUsers = []
-  console.log(socket)
-  console.log(io)
-  socket.on('login', loginUserId => {
-    User.findByPk(loginUserId)
-      .then(user => {
-        if (!user) {
-          io.sockets.emit('loginFail', { message: '輸入錯誤使用者Id，無法登入' })
-        } else {
-          onlineUsers.push(user.dataValues)
-          io.sockets.emit('message', {
-            message: `歡迎${user.dataValues.name}加入聊天室`,
-            source: 'server',
-            userData: user,
-            createdAt: moment().format(),
-            action: 'join'
-          })
-          io.sockets.emit('userListUpdate', {
-            onlineUsers,
-            onlineUserNumber: onlineUsers.length
-          })
-          Message.findAll({
-            raw: true,
-            nest: true,
-            attributes: { exclude: ['updatedAt'] },
-            include: [User]
-          })
-            .then(data => {
-              const messageData = data.map(i => ({
-                ...i,
-                createdAt: moment(i.createdAt).fromNow()
-              }))
-              return socket.emit('loginSuccess', {
-                message: '登入成功',
-                loginUserId: user.dataValues.id,
-                userName: user.dataValues.name,
-                messageData,
-                onlineUsers,
-                onlineUserNumber: onlineUsers.length
-              })
-            })
-        }
+  socket.on('login', async data => {
+    const userData = await User.findByPk(data.userId).toJSON()
+    if (!userData) {
+      io.sockets.emit('loginFail', { message: '輸入錯誤使用者Id，無法登入' })
+    } else {
+      // 登入成功後，加入的使用者資訊
+      onlineUsers.push(userData)
+      const newMessage = await Message.create({
+        userId: userData.id,
+        message: 'join'
+      }).toJSON()
+
+      // 登入成功後回傳給所有上線使用者
+      io.sockets.emit('message', {
+        message: 'join',
+        source: 'server',
+        userData: userData,
+        createdAt: newMessage.createdAt
       })
+
+      io.sockets.emit('userListUpdate', {
+        onlineUsers,
+        onlineUserNumber: onlineUsers.length
+      })
+
+      // 更新登入使用者歷史訊息
+      const oleMessage = await Message.findAll({
+        raw: true,
+        nest: true,
+        attributes: { exclude: ['updatedAt'] },
+        include: [User]
+      })
+
+      socket.emit('loginSuccess', {
+        message: '登入成功',
+        loginUserId: userData.id,
+        userName: userData.name,
+        messageData: oleMessage,
+        onlineUsers,
+        onlineUserNumber: onlineUsers.length
+      })
+    }
   })
 
   /* 監聽登出事件 */
