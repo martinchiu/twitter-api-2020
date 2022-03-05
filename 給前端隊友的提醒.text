@@ -4,6 +4,6 @@
 4.正式的通道，後端會在3/5白天開始開發
 5.有任何疑問請在早上9:00到晚上11:59在 discard tag後端，其他時間請在後端repo發issue通知後端問題
 6.後端 issues 網址 https://github.com/HUANG-SIH-MAN/twitter-api-2020/issues
-7.後端雲端部屬網址 https://rocky-shelf-75930.herokuapp.com:8080/
+7.後端雲端部屬網址 https://rocky-shelf-75930.herokuapp.com/
 8.Socket.io伺服器部屬後，實際網址後端要研究
 9.內文資訊隨時更新
