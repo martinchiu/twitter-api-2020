@@ -13,7 +13,8 @@ module.exports = (io, socket) => {
       onlineUsers.push(userData)
       const newMessage = await Message.create({
         userId: userData.id,
-        message: 'join'
+        message: 'join',
+        source: 'server'
       })
       // 登入成功後回傳給所有上線使用者
       io.sockets.emit('message', {
@@ -64,11 +65,12 @@ module.exports = (io, socket) => {
   })
 
   /* 接收訊息 */
-  socket.on('message', data => {
-    Message.create({
-      userId: data.userData.id,
+  socket.on('message', async data => {
+    const newMessage = await Message.create({
+      userId: data.userId,
+      source: data.source,
       message: data.message
     })
-      .then(message => io.sockets.emit('message', message.dataValues.toJSON()))
+    io.sockets.emit('message', newMessage)
   })
 }
