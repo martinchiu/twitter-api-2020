@@ -3,53 +3,59 @@ const moment = require('moment')
 
 module.exports = (io, socket) => {
   let onlineUsers = []
-  socket.on('login', async data => {
-    const userData = await User.findByPk(data.userId, { raw: true })
-    delete userData.password
-    if (!userData) {
-      io.sockets.emit('fail', { message: '輸入錯誤使用者Id，無法登入' })
-    } else {
-      // 登入成功後，加入的使用者資訊
-      onlineUsers.push(userData)
-      const newMessage = await Message.create({
-        userId: userData.id,
-        message: 'join'
-      })
-      // 登入成功後回傳給所有上線使用者
-      io.sockets.emit('message', {
-        message: 'join',
-        source: 'server',
-        userData: userData,
-        createdAt: newMessage.dataValues.createdAt
-      })
+  socket.on('login', data => {
+    User.findByPk(data.userId, { raw: true })
+      .then(user => {
+        delete user.password
+        if (!user) {
+          io.sockets.emit('fail', { message: '輸入錯誤使用者Id，無法登入' })
+        } else {
+          // 登入成功後，加入的使用者資訊
+          onlineUsers.push(user)
+          Message.create({
+            userId: user.id,
+            message: 'join'
+          })
+            .then(message => {
+              // 登入成功後回傳給所有上線使用者
+              io.sockets.emit('message', {
+                message: 'join',
+                source: 'server',
+                userData: user,
+                createdAt: message.dataValues.createdAt
+              })
 
-      io.sockets.emit('userListUpdate', {
-        onlineUsers,
-        onlineUserNumber: onlineUsers.length
-      })
+              // 更新上線使用者清單
+              io.sockets.emit('userListUpdate', {
+                onlineUsers,
+                onlineUserNumber: onlineUsers.length
+              })
+            })
 
-      // 更新登入使用者歷史訊息
-      const oldMessage = await Message.findAll({
-        raw: true,
-        nest: true,
-        attributes: { exclude: ['updatedAt'] },
-        include: [User]
+          // 更新登入使用者歷史訊息
+          Message.findAll({
+            raw: true,
+            nest: true,
+            attributes: { exclude: ['updatedAt'] },
+            include: [User]
+          })
+            .then(message => {
+              socket.emit('loginSuccess', {
+                message: '登入成功',
+                loginUserId: user.id,
+                userName: user.name,
+                messageData: message.map(i => ({ ...i, source: 'user' })),
+                onlineUsers,
+                onlineUserNumber: onlineUsers.length
+              })
+            })
+        }
       })
-
-      socket.emit('loginSuccess', {
-        message: '登入成功',
-        loginUserId: userData.id,
-        userName: userData.name,
-        messageData: oldMessage,
-        onlineUsers,
-        onlineUserNumber: onlineUsers.length
-      })
-    }
   })
 
   /* 監聽登出事件 */
   socket.on('logout', data => {
-    onlineUsers = onlineUsers.filter(i => i !== data.userId)
+    onlineUsers = onlineUsers.filter(i => i.id !== data.userId)
     io.sockets.emit('message', {
       message: `${data.userName}離開聊天室`,
       source: 'server',
@@ -75,11 +81,11 @@ module.exports = (io, socket) => {
             message: data.message
           })
             .then(message => {
+              const messageData = message.toJSON()
               const data = {
-                message: message.dataValues.message,
+                ...messageData,
                 source: 'user',
-                userData: user.toJSON(),
-                createdAt: message.dataValues.createdAt
+                userData: user.toJSON()
               }
               io.sockets.emit('message', data)
             })
