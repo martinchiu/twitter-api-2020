@@ -5,8 +5,8 @@ module.exports = (sequelize, DataTypes) => {
     listenUserId: DataTypes.INTEGER
   }, {})
   Relationship.associate = function (models) {
-    Relationship.belongsTo(models.User, { foreignKey: 'sendUserId' })
-    Relationship.belongsTo(models.User, { foreignKey: 'listenUserId' })
+    Relationship.belongsTo(models.User, { foreignKey: 'sendUserId', as: 'sendUser' })
+    Relationship.belongsTo(models.User, { foreignKey: 'listenUserId', as: 'listenUser' })
   }
   return Relationship
 }

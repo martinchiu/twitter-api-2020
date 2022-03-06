@@ -12,7 +12,7 @@ module.exports = (io, socket) => {
 
     // 建立私訊關係與 room
     Relationship.findOrCreate({ where: data })
-    const roomName = createRoomName(...data)
+    const roomName = createRoomName(data.sendUserId, data.listenUserId)
     socket.join(roomName)
 
     // 回傳 listenUser 給前端
@@ -30,6 +30,37 @@ module.exports = (io, socket) => {
         avatar: https://google.com
       }
     */
+
+    // 回傳訊息列表給前端
+    Promise.all([
+      Relationship.findAll({
+        raw: true,
+        nest: true,
+        where: { listenUserId: data.sendUserId },
+        attributes: [],
+        include: [
+          { model: User, as: 'listenUser', attributes: ['id', 'name', 'account', 'avatar'] }
+        ]
+      }),
+      Relationship.findAll({
+        raw: true,
+        nest: true,
+        where: { sendUserId: data.sendUserId },
+        attributes: [],
+        include: [
+          { model: User, as: 'sendUser', attributes: ['id', 'name', 'account', 'avatar'] }
+        ]
+      })])
+      .then(([data1, data2]) => {
+        const listenUser = data1.map(i => ({ ...i.listenUser }))
+        const sendUser = data2.map(i => ({ ...i.sendUser }))
+        const data = [
+          ...listenUser,
+          ...sendUser
+        ]
+        console.log(data)
+        io.in(roomName).emit('userList', data)
+      })
   })
   socket.on('privateMessage', async data => {
     // 預設前端回傳的格式：
