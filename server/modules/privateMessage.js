@@ -31,18 +31,26 @@ module.exports = (io, socket) => {
       }
     */
   })
-  socket.on('privateMessage', data => {
-    /*
-      前端，猜測用io.in(room).emit('Message', data)方式，另一人也收得到?
-      要發送的形式 io.in(roomName).emit('privateMessage', data)
-      要給的資料 data
-      {
-        sendUserId: 6,
-        listenUserId: 8,
-        message: 'socket好難，room是什麼鬼，能吃嗎?'
-      }
-    */
-    // 儲存傳送的訊息
-    PrivateMessage.create(data)
+  socket.on('privateMessage', async data => {
+    // 預設前端回傳的格式：
+    // data {
+    //   sendUserId: 1,
+    //   listenUserId: 2,
+    //    message: '又要變天了...'
+    // }
+    const roomName = createRoomName(...data)
+    const privateMessage = await PrivateMessage.create({
+      sendUserId: data.sendUserId,
+      listenUserId: data.listenUserId,
+      message: data.message
+    })
+    io.to(roomName).emit('message', { privateMessage: privateMessage.dataValues })
+    // 回傳前端的格式：
+    // privateMessage {
+    //   sendUserId: 1,
+    //   listenUserId: 2,
+    //   message: '又要變天了...',
+    //   createdAt: 2022 - 03 - 05 07: 03: 30
+    // }
   })
 }
