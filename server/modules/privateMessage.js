@@ -39,7 +39,7 @@ module.exports = (io, socket) => {
         where: { listenUserId: data.sendUserId },
         attributes: [],
         include: [
-          { model: User, as: 'listenUser', attributes: ['id', 'name', 'account', 'avatar'] }
+          { model: User, as: 'sendUser', attributes: ['id', 'name', 'account', 'avatar'] }
         ]
       }),
       Relationship.findAll({
@@ -48,7 +48,7 @@ module.exports = (io, socket) => {
         where: { sendUserId: data.sendUserId },
         attributes: [],
         include: [
-          { model: User, as: 'sendUser', attributes: ['id', 'name', 'account', 'avatar'] }
+          { model: User, as: 'listenUser', attributes: ['id', 'name', 'account', 'avatar'] }
         ]
       })])
       .then(([data1, data2]) => {
@@ -58,7 +58,7 @@ module.exports = (io, socket) => {
           ...listenUser,
           ...sendUser
         ]
-        io.in(roomName).emit('userList', data)
+        io.in(roomName).emit('userList', [...new Set(data)])
       })
   })
   socket.on('privateMessage', async data => {
