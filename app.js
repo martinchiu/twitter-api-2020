@@ -12,7 +12,8 @@ const PORT = process.env.PORT || 3000
 
 // socket設定
 const buildSocket = require('./server')
-buildSocket(app)
+const server = require('http').Server(app)
+buildSocket(server)
 
 app.use(passport.initialize())
 app.use(express.urlencoded({ extended: true }))
@@ -20,6 +21,6 @@ app.use(express.json())
 app.use('/api', CORSHeader, router)
 
 app.get('/', (req, res) => res.send('Hello World!'))
-app.listen(PORT, () => console.log(`Example app listening on port ${PORT}!`))
+server.listen(PORT, () => console.log(`Example app listening on port ${PORT}!`))
 
 module.exports = app
