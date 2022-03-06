@@ -7,7 +7,8 @@ module.exports = (server) => {
       origin: process.env.front_end_web_url,
       allowedHeaders: ['Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization'],
       credentials: true
-    }
+    },
+    pingTimeout: 50000
   })
   io.on('connection', (socket) => {
     // 可以在伺服器端顯示通道過來的所有事件，以及相關的參數
