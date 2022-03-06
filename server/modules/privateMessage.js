@@ -38,13 +38,20 @@ module.exports = (io, socket) => {
     //   listenUserId: 2,
     //    message: '又要變天了...'
     // }
-    const roomName = createRoomName(...data)
-    const privateMessage = await PrivateMessage.create({
-      sendUserId: data.sendUserId,
-      listenUserId: data.listenUserId,
-      message: data.message
-    })
-    io.to(roomName).emit('message', { privateMessage: privateMessage.dataValues })
+    const sendUser = await User.findByPk(data.sendUserId)
+    const listenUser = await User.findByPk(data.listenUserId)
+    if (!sendUser) {
+      io.sockets.emit('fail', { message: '輸入錯誤使用者Id，無法發送訊息' })
+    } else if (!listenUser) {
+      io.sockets.emit('fail', { message: '輸入錯誤使用者Id，無法接收訊息' })
+    } else {
+      const roomName = createRoomName(...data)
+      const privateMessage = await PrivateMessage.create({
+        sendUserId: data.sendUserId,
+        listenUserId: data.listenUserId,
+        message: data.message
+      })
+      io.to(roomName).emit('message', { privateMessage: privateMessage.dataValues })
     // 回傳前端的格式：
     // privateMessage {
     //   sendUserId: 1,
@@ -52,5 +59,6 @@ module.exports = (io, socket) => {
     //   message: '又要變天了...',
     //   createdAt: 2022 - 03 - 05 07: 03: 30
     // }
+    }
   })
 }
