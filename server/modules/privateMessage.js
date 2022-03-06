@@ -58,7 +58,6 @@ module.exports = (io, socket) => {
           ...listenUser,
           ...sendUser
         ]
-        console.log(data)
         io.in(roomName).emit('userList', data)
       })
   })
