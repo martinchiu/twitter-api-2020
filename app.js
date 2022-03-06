@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000
 
 // socket設定
 const buildSocket = require('./server')
-const server = require('http').createServer(app)
+const server = require('http').Server(app)
 buildSocket(server)
 
 app.use(passport.initialize())

@@ -2,12 +2,13 @@
 module.exports = (sequelize, DataTypes) => {
   const Message = sequelize.define('Message', {
     userId: DataTypes.INTEGER,
-    message: DataTypes.TEXT
+    message: DataTypes.TEXT,
+    source: DataTypes.STRING
   }, {
     underscored: true
   })
   Message.associate = function (models) {
-    Message.belongsTo(models.User, { foreignKey: 'userId' })
+    Message.belongsTo(models.User, { foreignKey: 'userId', as: 'userData' })
   }
   return Message
 }

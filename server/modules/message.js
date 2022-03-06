@@ -1,43 +1,50 @@
 const { User, Message } = require('../../models')
-const moment = require('moment')
+let onlineUsers = []
 
 module.exports = (io, socket) => {
-  let onlineUsers = []
-  console.log(socket)
-  console.log(io)
-  socket.on('login', loginUserId => {
-    User.findByPk(loginUserId)
+  /* 監聽登入事件 */
+  socket.on('login', data => {
+    User.findByPk(data.userId, { raw: true })
       .then(user => {
+        delete user.password
         if (!user) {
-          io.sockets.emit('loginFail', { message: '輸入錯誤使用者Id，無法登入' })
+          io.sockets.emit('fail', { message: '輸入錯誤使用者Id，無法登入' })
         } else {
-          onlineUsers.push(user.dataValues)
-          io.sockets.emit('message', {
-            message: `歡迎${user.dataValues.name}加入聊天室`,
-            source: 'server',
-            userData: user,
-            createdAt: moment().format(),
-            action: 'join'
+          // 登入成功後，加入的使用者資訊
+          if (!onlineUsers.some(i => i.id === user.id)) {
+            onlineUsers.push(user)
+          }
+          Message.create({
+            userId: user.id,
+            message: 'join',
+            source: 'server'
           })
-          io.sockets.emit('userListUpdate', {
-            onlineUsers,
-            onlineUserNumber: onlineUsers.length
-          })
+            .then(message => {
+              // 登入成功後回傳給所有上線使用者
+              io.sockets.emit('message', {
+                ...message.toJSON(),
+                userData: user
+              })
+
+              // 更新上線使用者清單
+              io.sockets.emit('userListUpdate', {
+                onlineUsers,
+                onlineUserNumber: onlineUsers.length
+              })
+            })
+
+          // 更新登入使用者歷史訊息
           Message.findAll({
             raw: true,
             nest: true,
             attributes: { exclude: ['updatedAt'] },
-            include: [User]
+            include: [{ model: User, as: 'userData' }]
           })
-            .then(data => {
-              const messageData = data.map(i => ({
-                ...i,
-                createdAt: moment(i.createdAt).fromNow()
-              }))
-              return socket.emit('loginSuccess', {
+            .then(messageData => {
+              socket.emit('loginSuccess', {
                 message: '登入成功',
-                loginUserId: user.dataValues.id,
-                userName: user.dataValues.name,
+                loginUserId: user.id,
+                userName: user.name,
                 messageData,
                 onlineUsers,
                 onlineUserNumber: onlineUsers.length
@@ -49,26 +56,51 @@ module.exports = (io, socket) => {
 
   /* 監聽登出事件 */
   socket.on('logout', data => {
-    onlineUsers = onlineUsers.filter(i => i !== data.userId)
-    io.sockets.emit('message', {
-      message: `${data.userName}離開聊天室`,
-      source: 'server',
-      userData: data,
-      createdAt: moment().format(),
-      action: 'leave'
-    })
-    io.sockets.emit('userListUpdate', {
-      onlineUsers,
-      onlineUserNumber: onlineUsers.length
-    })
+    User.findByPk(data.userId, { raw: true })
+      .then(user => {
+        delete user.password
+        if (!user) {
+          io.sockets.emit('fail', { message: '輸入錯誤使用者Id，無法登出' })
+        } else {
+          onlineUsers = onlineUsers.filter(i => i.id !== data.userId)
+          Message.create({
+            userId: data.userId,
+            message: 'logout',
+            source: 'server'
+          })
+            .then(message => {
+              io.sockets.emit('message', {
+                ...message.toJSON(),
+                userData: user
+              })
+              io.sockets.emit('userListUpdate', {
+                onlineUsers,
+                onlineUserNumber: onlineUsers.length
+              })
+            })
+        }
+      })
   })
 
   /* 接收訊息 */
   socket.on('message', data => {
-    Message.create({
-      userId: data.userData.id,
-      message: data.message
-    })
-      .then(message => io.sockets.emit('message', message))
+    User.findByPk(data.userId)
+      .then(user => {
+        if (!user) {
+          io.sockets.emit('fail', { message: '輸入錯誤使用者Id，無法新增訊息' })
+        } else {
+          Message.create({
+            userId: data.userId,
+            message: data.message,
+            source: 'user'
+          })
+            .then(message => {
+              io.sockets.emit('message', {
+                ...message.toJSON(),
+                userData: user.toJSON()
+              })
+            })
+        }
+      })
   })
 }
