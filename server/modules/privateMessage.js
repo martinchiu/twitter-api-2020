@@ -1,5 +1,6 @@
 const { User, PrivateMessage, Relationship } = require('../../models')
 const createRoomName = require('../../utils/roomName')
+const { userList } = require('../../services/privateMessage-services')
 
 module.exports = (io, socket) => {
   /* 建立私訊關係 */
@@ -17,70 +18,18 @@ module.exports = (io, socket) => {
       })
 
     // 回傳訊息列表給前端
-    Promise.all([
-      Relationship.findAll({
-        group: 'sendUserId',
-        raw: true,
-        nest: true,
-        where: { listenUserId: data.sendUserId },
-        attributes: [],
-        include: [
-          { model: User, as: 'sendUser', attributes: ['id', 'name', 'account', 'avatar'] }
-        ]
-      }),
-      Relationship.findAll({
-        group: 'listenUserId',
-        raw: true,
-        nest: true,
-        where: { sendUserId: data.sendUserId },
-        attributes: [],
-        include: [
-          { model: User, as: 'listenUser', attributes: ['id', 'name', 'account', 'avatar'] }
-        ]
-      })])
-      .then(([data1, data2]) => {
-        const listenUser = data1.map(i => ({ ...i.sendUser }))
-        const sendUser = data2.map(i => ({ ...i.listenUser }))
-        const data = [
-          ...listenUser,
-          ...sendUser
-        ]
-        io.in(roomName).emit('userList', [...new Set(data)])
-      })
+    userList(data.sendUserId, (err, data) => {
+      if (err) io.in(roomName).emit('fail', err)
+      io.in(roomName).emit('userList', data)
+    })
   })
 
   /* 回傳私訊列表 */
   socket.on('userList', data => {
-    Promise.all([
-      Relationship.findAll({
-        group: 'sendUserId',
-        raw: true,
-        nest: true,
-        where: { listenUserId: data.userId },
-        attributes: [],
-        include: [
-          { model: User, as: 'sendUser', attributes: ['id', 'name', 'account', 'avatar'] }
-        ]
-      }),
-      Relationship.findAll({
-        group: 'listenUserId',
-        raw: true,
-        nest: true,
-        where: { sendUserId: data.userId },
-        attributes: [],
-        include: [
-          { model: User, as: 'listenUser', attributes: ['id', 'name', 'account', 'avatar'] }
-        ]
-      })])
-      .then(([data1, data2]) => {
-        const listenUser = data1.map(i => ({ ...i.sendUser }))
-        const sendUser = data2.map(i => ({ ...i.listenUser }))
-        const data = [
-          ...listenUser,
-          ...sendUser
-        ]
-        io.sockets.emit('userList', [...new Set(data)])
-      })
+    userList(data.userId, (err, data) => {
+      if (err) io.sockets.emit('fail', err)
+      io.sockets.emit('userList', data)
+    })
   })
 
   /* 傳遞私訊內容 */

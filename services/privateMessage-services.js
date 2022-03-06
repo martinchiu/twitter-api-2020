@@ -1,9 +1,9 @@
 const { User, Relationship } = require('../models')
 
 const privateMessagepServices = {
-  userList: (userId, cb) => {
-    return Promise.all([
-      Relationship.findAll({
+  userList: async (userId, cb) => {
+    try {
+      const listenUser = await Relationship.findAll({
         group: 'sendUserId',
         raw: true,
         nest: true,
@@ -12,8 +12,8 @@ const privateMessagepServices = {
         include: [
           { model: User, as: 'sendUser', attributes: ['id', 'name', 'account', 'avatar'] }
         ]
-      }),
-      Relationship.findAll({
+      })
+      const sendUser = await Relationship.findAll({
         group: 'listenUserId',
         raw: true,
         nest: true,
@@ -22,18 +22,16 @@ const privateMessagepServices = {
         include: [
           { model: User, as: 'listenUser', attributes: ['id', 'name', 'account', 'avatar'] }
         ]
-      })])
-      .then(([data1, data2]) => {
-        const listenUser = data1.map(i => ({ ...i.sendUser }))
-        const sendUser = data2.map(i => ({ ...i.listenUser }))
-        const data = [
-          ...listenUser,
-          ...sendUser
-        ]
-        const userData = [...new Set(data)]
-        return cb(null, userData)
       })
-      .catch(err => cb(err, null))
+
+      const data = [
+        ...listenUser.map(i => ({ ...i.sendUser })),
+        ...sendUser.map(i => ({ ...i.listenUser }))
+      ]
+      return cb(null, [...new Set(data)])
+    } catch (err) {
+      return cb(err, null)
+    }
   }
 }
 
