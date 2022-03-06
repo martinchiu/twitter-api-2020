@@ -9,7 +9,7 @@ module.exports = (io, socket) => {
         listenUserId: 8
       }
     */
-
+    console.log(data)
     // 建立私訊關係與 room
     Relationship.findOrCreate({ where: data })
     const roomName = createRoomName(data.sendUserId, data.listenUserId)
@@ -52,13 +52,13 @@ module.exports = (io, socket) => {
         ]
       })])
       .then(([data1, data2]) => {
-        const listenUser = data1.map(i => ({ ...i.listenUser }))
-        const sendUser = data2.map(i => ({ ...i.sendUser }))
+        const listenUser = data1.map(i => ({ ...i.sendUser }))
+        const sendUser = data2.map(i => ({ ...i.listenUser }))
         const data = [
           ...listenUser,
           ...sendUser
         ]
-        io.in(roomName).emit('userList', [...new Set(data)])
+        io.in(roomName).emit('userList', data)
       })
   })
   socket.on('privateMessage', async data => {
