@@ -1,15 +1,10 @@
 const { User, PrivateMessage, Relationship } = require('../../models')
 const createRoomName = require('../../utils/roomName')
+const { userList } = require('../../services/privateMessage-services')
 
 module.exports = (io, socket) => {
+  /* 建立私訊關係 */
   socket.on('createRoom', data => {
-    /* 前端給的 data 格式
-      {
-        sendUserId: 6,
-        listenUserId: 8
-      }
-    */
-    console.log(data)
     // 建立私訊關係與 room
     Relationship.findOrCreate({ where: data })
     const roomName = createRoomName(data.sendUserId, data.listenUserId)
@@ -22,52 +17,31 @@ module.exports = (io, socket) => {
         io.in(roomName).emit('listenUserData', user)
       })
 
-    /* 回傳給前端資料格式，通道 listenUserData
-      {
-        id: 8,
-        name: 章魚燒,
-        account: fghstdh,
-        avatar: https://google.com
-      }
-    */
-
     // 回傳訊息列表給前端
-    Promise.all([
-      Relationship.findAll({
-        raw: true,
-        nest: true,
-        where: { listenUserId: data.sendUserId },
-        attributes: [],
-        include: [
-          { model: User, as: 'sendUser', attributes: ['id', 'name', 'account', 'avatar'] }
-        ]
-      }),
-      Relationship.findAll({
-        raw: true,
-        nest: true,
-        where: { sendUserId: data.sendUserId },
-        attributes: [],
-        include: [
-          { model: User, as: 'listenUser', attributes: ['id', 'name', 'account', 'avatar'] }
-        ]
-      })])
-      .then(([data1, data2]) => {
-        const listenUser = data1.map(i => ({ ...i.sendUser }))
-        const sendUser = data2.map(i => ({ ...i.listenUser }))
-        const data = [
-          ...listenUser,
-          ...sendUser
-        ]
-        io.in(roomName).emit('userList', [...new Set(data)])
-      })
+    userList(data.sendUserId, (err, data) => {
+      if (err) io.in(roomName).emit('fail', err)
+      io.in(roomName).emit('userList', data)
+    })
   })
+
+  /* 回傳私訊列表 */
+  socket.on('userList', data => {
+    userList(data.userId, (err, data) => {
+      if (err) io.sockets.emit('fail', err)
+      io.sockets.emit('userList', data)
+    })
+  })
+
+  /* 傳遞私訊內容 */
   socket.on('privateMessage', async data => {
-    // 預設前端回傳的格式：
-    // data {
-    //   sendUserId: 1,
-    //   listenUserId: 2,
-    //    message: '又要變天了...'
-    // }
+    /*
+    預設前端回傳的格式：
+    data {
+      sendUserId: 1,
+      listenUserId: 2,
+      message: '又要變天了...'
+    }
+    */
     const sendUser = await User.findByPk(data.sendUserId)
     const listenUser = await User.findByPk(data.listenUserId)
     if (!sendUser) {
@@ -82,13 +56,15 @@ module.exports = (io, socket) => {
         message: data.message
       })
       io.to(roomName).emit('message', { privateMessage: privateMessage.dataValues })
-    // 回傳前端的格式：
-    // privateMessage {
-    //   sendUserId: 1,
-    //   listenUserId: 2,
-    //   message: '又要變天了...',
-    //   createdAt: 2022 - 03 - 05 07: 03: 30
-    // }
+    /*
+      回傳前端的格式：
+      privateMessage {
+        sendUserId: 1,
+        listenUserId: 2,
+        message: '又要變天了...',
+        createdAt: 2022 - 03 - 05 07: 03: 30
+      }
+    */
     }
   })
 }

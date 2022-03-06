@@ -37,6 +37,7 @@ module.exports = (io, socket) => {
           Message.findAll({
             raw: true,
             nest: true,
+            where: { source: 'user' },
             attributes: { exclude: ['updatedAt'] },
             include: [{ model: User, as: 'userData' }]
           })
