@@ -12,8 +12,7 @@ const PORT = process.env.PORT || 3000
 
 // socket設定
 const buildSocket = require('./server')
-const server = require('http').createServer(app)
-buildSocket(server)
+buildSocket(app)
 
 app.use(passport.initialize())
 app.use(express.urlencoded({ extended: true }))
