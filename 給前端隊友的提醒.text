@@ -1,7 +1,7 @@
 1.請不要管CSS和JS資料夾的檔案，以及index.html那是後端在測試Socket.io通道所使用的版面
-2.專案下載到本地端後，使用npm run dev開始專案，Socket.io伺服器網址是'http://localhost:8080/'
-3.目前只有初步建立通道 (並不是所有規格按照3/4開會所講)
-4.正式的通道，後端會在3/5白天開始開發
+2.專案下載到本地端後，使用npm run dev開始專案，Socket.io伺服器網址是'http://localhost:3000/'
+3.目前已經完成公開聊天室部分，如果可以的話，看有妹ˊ
+4.
 5.有任何疑問請在早上9:00到晚上11:59在 discard tag後端，其他時間請在後端repo發issue通知後端問題
 6.後端 issues 網址 https://github.com/HUANG-SIH-MAN/twitter-api-2020/issues
 7.後端雲端部屬網址同時也是Socket.io伺服器網址 https://rocky-shelf-75930.herokuapp.com/
