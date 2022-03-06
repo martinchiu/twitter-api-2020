@@ -4,7 +4,7 @@ const privateMessage = require('./modules/privateMessage')
 module.exports = (server) => {
   const io = require('socket.io')(server, {
     cors: {
-      origin: '*',
+      origin: process.env.front_end_web_url,
       allowedHeaders: ['Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization'],
       credentials: true
     }
