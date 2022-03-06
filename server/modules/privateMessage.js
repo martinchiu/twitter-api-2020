@@ -58,7 +58,7 @@ module.exports = (io, socket) => {
           ...listenUser,
           ...sendUser
         ]
-        io.in(roomName).emit('userList', data)
+        io.in(roomName).emit('userList', [...new Set(data)])
       })
   })
   socket.on('privateMessage', async data => {
